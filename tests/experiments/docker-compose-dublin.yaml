@@ -1,0 +1,104 @@
+services:
+  cloud_service:
+    image: bus-exp:0.0.1
+  edge_service:
+    image: bus-exp:0.0.1
+  bus_service:
+    image: bus-exp:0.0.1
+version: '3.7'
+x-fogify:
+  networks:
+  - network_type: slice
+    midhaul_qos:
+      latency:
+        delay: 3ms
+        deviation: 1ms
+      bandwidth: 100mbps
+    backhaul_qos:
+      latency:
+        delay: 30ms
+        deviation: 1ms
+      bandwidth: 100mbps
+    radio_access_qos:
+      radius: 0.2km
+      degradation_function: LinearDegradationFunction
+      best_qos:
+        latency:
+          delay: 1ms
+          deviation: 1ms
+        bandwidth: 10mbps
+      worst_qos:
+        latency:
+          delay: 100ms
+          deviation: 10ms
+        bandwidth: 1mbps
+    name: dublin_network
+  nodes:
+  - capabilities:
+      memory: 2G
+      processor:
+        clock_speed: 1400
+        cores: 4
+    name: cloud_machine
+  - capabilities:
+      memory: 2G
+      processor:
+        clock_speed: 1400
+        cores: 4
+    name: edge_device
+  - capabilities:
+      memory: 0.250G
+      processor:
+        clock_speed: 500
+        cores: 1
+    name: bus_device
+
+#
+#  scenarios:
+#  - name: mobility_scenario
+#    actions:
+#    - time: 10
+#      position: 0
+#      instance_type: car-workload-1
+#      instances: 1
+#      action:
+#        type: move
+#        parameters:
+#            network: edge-net-1
+#            lat: 35.15091624851098
+#            lon: 33.408127726284306
+#    - time: 10
+#      position: 1
+#      instance_type: car-workload-1
+#      instances: 1
+#      action:
+#        type: move
+#        parameters:
+#            network: edge-net-1
+#            lat: 35.15192942739787
+#            lon: 33.405751258916474
+#    - time: 10
+#      position: 2
+#      instance_type: car-workload-1
+#      instances: 1
+#      action:
+#        type: move
+#        parameters:
+#            network: edge-net-1
+#            lat: 35.15285486445768
+#            lon: 33.40372880297997
+#    - time: 10
+#      position: 3
+#      instance_type: car-workload-1
+#      instances: 1
+#      action:
+#        type: move
+#        parameters:
+#            network: edge-net-1
+#            lat: 35.15396009516559
+#            lon: 33.401346833487295
+#    - time: 5
+#      position: 4
+#      instance_type: car-workload-1
+#      instances: 1
+#      action: "NOOP"

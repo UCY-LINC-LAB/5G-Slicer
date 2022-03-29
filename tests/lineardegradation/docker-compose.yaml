@@ -1,0 +1,190 @@
+services:
+  car-workload:
+    environment:
+      NODE_TYPE: IOT_NODE
+    image: taxi-exp:0.0.1
+    volumes:
+    - /home/ubuntu/data:/data
+  cloud-server:
+    environment:
+      NODE_TYPE: CLOUD_NODE
+    image: taxi-exp:0.0.1
+  mec-svc-1:
+    environment:
+      NODE_TYPE: EDGE_NODE
+      REGION: bronx
+    image: taxi-exp:0.0.1
+  mec-svc-2:
+    environment:
+      NODE_TYPE: EDGE_NODE
+      REGION: brooklyn
+    image: taxi-exp:0.0.1
+version: '3.7'
+x-fogify:
+  networks:
+  - downlink:
+      bandwidth: 5mbps
+      latency:
+        delay: 50ms
+    name: internet
+    uplink:
+      bandwidth: 10mbps
+      drop: 0.1%
+      latency:
+        delay: 50ms
+  - bidirectional:
+      bandwidth: 100mbps
+      drop: 0.1%
+      latency:
+        delay: 5ms
+    name: edge-net-2
+  - network_type: slice
+    midhaul_qos:
+      latency:
+        delay: 3ms
+        deviation: 1ms
+      bandwidth: 100mbps
+    backhaul_qos:
+      latency:
+        delay: 30ms
+        deviation: 1ms
+      bandwidth: 100mbps
+    wireless_connection_type: LinearDegradation
+    radio_access_qos:
+      radius: 0.8km
+      best_qos:
+        latency:
+          delay: 5ms
+          deviation: 1ms
+        bandwidth: 10mbps
+      worst_qos:
+        latency:
+          delay: 100ms
+          deviation: 10ms
+        bandwidth: 1mbps
+    RUs:
+      - lat: 35.14996886033924
+        lon: 33.410295020090246
+    name: edge-net-1
+
+  nodes:
+  - capabilities:
+      memory: 4G
+      processor:
+        clock_speed: 1400
+        cores: 4
+    name: cloud-server-node
+  - capabilities:
+      memory: 2G
+      processor:
+        clock_speed: 1400
+        cores: 2
+    name: edge-node
+  - capabilities:
+      memory: 0.5G
+      processor:
+        clock_speed: 700
+        cores: 1
+    name: car-node
+  topology:
+  - label: cloud-server
+    networks:
+    - internet
+    node: cloud-server-node
+    replicas: 1
+    service: cloud-server
+  - label: mec-svc-1
+    networks:
+    - edge-net-1
+    - internet
+    node: edge-node
+    replicas: 1
+    service: mec-svc-1
+    location: # 0m
+        lat: 35.14996886033924
+        lon: 33.410295020090246
+        location_type: EDGE
+  - label: mec-svc-2
+    networks:
+    - edge-net-2
+    - internet
+    node: edge-node
+    replicas: 1
+    service: mec-svc-2
+  - label: car-workload-1
+    networks:
+    - edge-net-1
+    - internet
+    node: car-node
+    replicas: 1
+    service: car-workload
+    location:
+        lat: 35.14996886033924
+        lon: 33.410295020090246
+        alt: 1
+#  - label: car-workload-3
+#    networks:
+#    - edge-net-1
+#    - internet
+#    node: car-node
+#    replicas: 1
+#    service: car-workload
+#    location: # 1500m
+#        lat: 35.15647774999147
+#        lon: 33.39591834753653
+  - label: car-workload-2
+    networks:
+    - edge-net-2
+    - internet
+    node: car-node
+    replicas: 1
+    service: car-workload
+  scenarios:
+  - name: mobility_scenario
+    actions:
+    - time: 10
+      position: 0
+      instance_type: car-workload-1
+      instances: 1
+      action:
+        type: move
+        parameters:
+            network: edge-net-1
+            lat: 35.15091624851098  #
+            lon: 33.408127726284306
+            alt: 5  # in meters
+    - time: 10
+      position: 1
+      instance_type: car-workload-1
+      instances: 1
+      action:
+        type: move
+        parameters:
+            network: edge-net-1
+            lat: 35.15192942739787
+            lon: 33.405751258916474
+    - time: 10
+      position: 2
+      instance_type: car-workload-1
+      instances: 1
+      action:
+        type: move
+        parameters:
+            network: edge-net-1
+            lat: 35.15285486445768
+            lon: 33.40372880297997
+    - time: 10
+      position: 3
+      instance_type: car-workload-1
+      instances: 1
+      action:
+        type: move
+        parameters:
+            network: edge-net-1
+            lat: 35.15396009516559
+            lon: 33.401346833487295
+    - time: 5
+      position: 4
+      instance_type: car-workload-1
+      instances: 1
+      action: "NOOP"

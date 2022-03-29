@@ -199,6 +199,6 @@ fabric.properties
 
 # Pyre type checker
 .pyre/
-*/all.csv
-*/stops.csv
 */ns-3.33-py3-none-any.whl
+/usecases/data/all.csv
+/usecases/data/stops.csv

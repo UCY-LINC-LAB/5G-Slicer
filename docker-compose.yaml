@@ -1,0 +1,83 @@
+version: '3.7'
+
+services:
+
+  ui:
+    build: .
+    image: 5g-slicer-jupiter
+    volumes:
+      - ./:/home/jovyan/work
+    ports:
+      - 8888:8888
+      - 5600:5600
+    environment:
+      - "JUPYTER_ENABLE_LAB=yes"
+      - "GRANT_SUDO=yes"
+    user: root
+    command: ['start.sh', 'jupyter', 'lab']
+  controller:
+    image: fogify
+    entrypoint: [ "python", "/code/fogify/main.py", "--controller"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+    ports:
+      - 5000:5000
+    extra_hosts:
+      - ${MANAGER_NAME}:${MANAGER_IP}
+    environment:
+      CPU_OVERSUBSCRIPTION_PERCENTAGE: ${CPU_OVERSUBSCRIPTION_PERCENTAGE}
+      RAM_OVERSUBSCRIPTION_PERCENTAGE: ${RAM_OVERSUBSCRIPTION_PERCENTAGE}
+      CPU_FREQ: ${CPU_FREQ}
+      HOST_IP: ${HOST_IP}
+      NAMESPACE_PATH: ${NAMESPACE_PATH}
+      SNIFFING_ENABLED: ${SNIFFING_ENABLED}
+      SNIFFING_PERIOD: ${SNIFFING_PERIOD}
+      CONNECTOR: ${CONNECTOR}
+      MANAGER_IP: ${MANAGER_IP}
+      MANAGER_NAME: ${MANAGER_NAME}
+  agent:
+    image: fogify
+    entrypoint: [ "python", "/code/fogify/main.py", "--agent", "--agent-ip", "${HOST_IP}"]
+    extra_hosts:
+      - ${MANAGER_NAME}:${MANAGER_IP}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+      - /proc/:${NAMESPACE_PATH}
+      - /var/run/docker/:/var/run/docker/
+      - /sys/class/net/:/sys/class/net/
+      - /lib/modules:/lib/modules
+      - /sbin/modprobe:/sbin/modprobe
+      - /usr/lib/tc:/usr/lib/tc
+    privileged: true
+    cap_add:
+      - ALL
+    depends_on:
+      - cadvisor
+      - controller
+    ports:
+      - 5500:5500
+    environment:
+      CONTROLLER_IP: ${MANAGER_IP}
+      HOST_IP: ${HOST_IP}
+      CPU_FREQ: ${CPU_FREQ}
+      NAMESPACE_PATH: ${NAMESPACE_PATH}
+      SNIFFING_ENABLED: ${SNIFFING_ENABLED}
+      SNIFFING_PERIODICITY: ${SNIFFING_PERIODICITY}
+      CONNECTOR: ${CONNECTOR}
+      MANAGER_IP: ${MANAGER_IP}
+      MANAGER_NAME: ${MANAGER_NAME}
+  cadvisor:
+    image: gcr.io/google-containers/cadvisor:latest
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - 9090:8080
+    expose:
+      - 8080
+      - 9090

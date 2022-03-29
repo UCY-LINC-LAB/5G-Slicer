@@ -89,7 +89,7 @@ series    = {IoTDI ’22}
 
 5G-Slicer's demo BibTeX citation:
 ```
-@inproceedings{Symeonides2020,
+@INPROCEEDINGS{Symeonides2022,
 author    = {Symeonides, Moysis and Trihinas, Demetris and Pallis, George and Dikaiakos, Marios D.},
 title     = {Demo: Emulating 5G-Ready Mobile IoT Services},
 booktitle = {Proceedings of the 7th ACM/IEEE Conference on Internet of Things Design and Implementation}, 

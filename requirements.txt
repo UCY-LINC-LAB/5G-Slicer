@@ -1,0 +1,8 @@
+geopy
+networkx==2.5
+ipywidgets
+pyproj
+ipyleaflet
+networkx
+Flask
+pytest

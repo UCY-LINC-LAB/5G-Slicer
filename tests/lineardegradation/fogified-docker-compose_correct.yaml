@@ -1,0 +1,125 @@
+services:
+  car-workload:
+    environment:
+      NODE_TYPE: IOT_NODE
+    image: taxi-exp:0.0.1
+    volumes:
+    - /home/ubuntu/data:/data
+  cloud-server:
+    environment:
+      NODE_TYPE: CLOUD_NODE
+    image: taxi-exp:0.0.1
+  mec-svc-1:
+    environment:
+      NODE_TYPE: EDGE_NODE
+      REGION: bronx
+    image: taxi-exp:0.0.1
+  mec-svc-2:
+    environment:
+      NODE_TYPE: EDGE_NODE
+      REGION: brooklyn
+    image: taxi-exp:0.0.1
+version: '3.7'
+x-fogify:
+  networks:
+  - downlink:
+      bandwidth: 5mbps
+      latency:
+        delay: 50ms
+    name: internet
+    uplink:
+      bandwidth: 10mbps
+      drop: 0.1%
+      latency:
+        delay: 50ms
+  - bidirectional:
+      bandwidth: 100mbps
+      drop: 0.1%
+      latency:
+        delay: 5ms
+    name: edge-net-2
+  - capacity: null
+    downlink:
+      bandwidth: 100.0mbps
+      latency:
+        delay: 15.0ms
+        deviation: 0.5ms
+    links:
+    - bidirectional: false
+      from_node: mec-svc-1
+      properties:
+        bandwidth: 9.989mbps
+        error_rate: 0.1%
+        latency:
+          delay: 5.22ms
+          deviation: 1.11ms
+      to_node: car-workload-1
+    - bidirectional: false
+      from_node: car-workload-1
+      properties:
+        bandwidth: 9.989mbps
+        error_rate: 0.1%
+        latency:
+          delay: 5.22ms
+          deviation: 1.11ms
+      to_node: mec-svc-1
+    name: edge-net-1
+    uplink:
+      bandwidth: 100.0mbps
+      latency:
+        delay: 15.0ms
+        deviation: 0.5ms
+  nodes:
+  - capabilities:
+      memory: 4G
+      processor:
+        clock_speed: 1400
+        cores: 4
+    name: cloud-server-node
+  - capabilities:
+      memory: 2G
+      processor:
+        clock_speed: 1400
+        cores: 2
+    name: edge-node
+  - capabilities:
+      memory: 0.5G
+      processor:
+        clock_speed: 700
+        cores: 1
+    name: car-node
+  topology:
+  - label: cloud-server
+    networks:
+    - internet
+    node: cloud-server-node
+    replicas: 1
+    service: cloud-server
+  - label: mec-svc-1
+    networks:
+    - edge-net-1
+    - internet
+    node: edge-node
+    replicas: 1
+    service: mec-svc-1
+  - label: mec-svc-2
+    networks:
+    - edge-net-2
+    - internet
+    node: edge-node
+    replicas: 1
+    service: mec-svc-2
+  - label: car-workload-1
+    networks:
+    - edge-net-1
+    - internet
+    node: car-node
+    replicas: 1
+    service: car-workload
+  - label: car-workload-2
+    networks:
+    - edge-net-2
+    - internet
+    node: car-node
+    replicas: 1
+    service: car-workload
