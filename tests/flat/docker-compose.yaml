@@ -50,7 +50,7 @@ x-fogify:
         deviation: 1ms
       bandwidth: 100mbps
     wireless_connection_type: FlatWirelessNetwork
-    radio_access_qos:
+    parameters:
       radius: 8km
       qos:
         latency:

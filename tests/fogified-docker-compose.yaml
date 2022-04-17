@@ -51,17 +51,16 @@ x-fogify:
         bandwidth: 67.339mbps
         error_rate: 0.1%
         latency:
-          delay: 2.1ms
-          deviation: 1.1ms
+          delay: 0.1ms
+          deviation: 0.1ms
       to_node: car-workload-1
     - bidirectional: false
       from_node: car-workload-1
       properties:
         bandwidth: 67.339mbps
-        error_rate: 0.1%
         latency:
-          delay: 2.1ms
-          deviation: 1.1ms
+          delay: 2.0ms
+          deviation: 1.0ms
       to_node: mec-svc-1
     name: edge-net-1
     uplink:

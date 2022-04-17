@@ -50,12 +50,12 @@ x-fogify:
         deviation: 1ms
       bandwidth: 100mbps
     wireless_connection_type: SISO
-    radio_access_qos:
+    parameters:
       transmit_power: 30  # dbm
       carrier_frequency: 28  # gigahrz
       bandwidth: 100  # megahrz
       UE_noise_figure: 7.8  # db
-      BS_antennas_gain: 8 # db
+      RU_antennas_gain: 8 # db
       UE_antennas_gain: 3 # db
       maximum_bitrate: 538.71
       minmum_bitrate: 53.87

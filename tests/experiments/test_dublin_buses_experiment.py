@@ -29,7 +29,7 @@ class TestDublinBusesExperiment(unittest.TestCase):
         self.assertEqual(experiment.slice_name, 'dublin_network')
         self.assertEqual(experiment.min_num_of_trace_steps, 0)
         self.assertEqual(experiment.max_num_of_trace_steps, 60)
-        self.assertEqual(experiment.bs_overlap, 'random')
+        self.assertEqual(experiment.ru_overlap, 'random')
 
     def test_init_with_more_compute_nodes_than_bs(self):
         experiment = BusExperiment(self.slicerSDK, num_of_edge=5, num_of_RUs=2, traces_filename="all.csv",
@@ -41,7 +41,7 @@ class TestDublinBusesExperiment(unittest.TestCase):
         for bsoverlap in ['max_density', 'min_density', 'random', 'none']:
             self.slicerSDK = SlicerSDK("http://controller:5000", file_path)
             experiment = BusExperiment(self.slicerSDK, traces_filename="all.csv", bus_stops_filename="stops.csv",
-                                       num_of_RUs=5, num_of_buses=10, num_of_edge=5, bs_overlap=bsoverlap,
+                                       num_of_RUs=5, num_of_buses=10, num_of_edge=5, ru_overlap=bsoverlap,
                                        bounding_box=((53.34483836229132, -6.274480819702148),
                                                      (53.34996212515024, -6.244525909423829)))
             experiment.generate_experiment()

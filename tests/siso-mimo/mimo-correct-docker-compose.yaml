@@ -49,18 +49,17 @@ x-fogify:
       from_node: cloud-server
       properties:
         bandwidth: 100.0mbps
-        error_rate: 0.1%
         latency:
-          delay: 31.6ms
-          deviation: 1.6ms
+          delay: 63.0ms
+          deviation: 3.0ms
       to_node: mec-svc-1
     - bidirectional: false
       from_node: cloud-server
       properties:
         bandwidth: 100.0mbps
         latency:
-          delay: 33.5ms
-          deviation: 2.5ms
+          delay: 60.0ms
+          deviation: 2.0ms
       to_node: car-workload-1
     - bidirectional: false
       from_node: mec-svc-1
@@ -68,8 +67,8 @@ x-fogify:
         bandwidth: 100.0mbps
         error_rate: 0.1%
         latency:
-          delay: 31.6ms
-          deviation: 1.6ms
+          delay: 3.1ms
+          deviation: 1.1ms
       to_node: cloud-server
     - bidirectional: false
       from_node: mec-svc-1
@@ -77,25 +76,24 @@ x-fogify:
         bandwidth: 269.356mbps
         error_rate: 0.1%
         latency:
-          delay: 2.1ms
-          deviation: 1.1ms
+          delay: 0.1ms
+          deviation: 0.1ms
       to_node: car-workload-1
     - bidirectional: false
       from_node: car-workload-1
       properties:
         bandwidth: 100.0mbps
         latency:
-          delay: 33.5ms
-          deviation: 2.5ms
+          delay: 8.0ms
+          deviation: 3.0ms
       to_node: cloud-server
     - bidirectional: false
       from_node: car-workload-1
       properties:
         bandwidth: 269.356mbps
-        error_rate: 0.1%
         latency:
-          delay: 2.1ms
-          deviation: 1.1ms
+          delay: 2.0ms
+          deviation: 1.0ms
       to_node: mec-svc-1
     name: edge-net-1
     uplink:

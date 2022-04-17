@@ -2,7 +2,7 @@ import unittest
 import yaml
 
 from networks.QoS import QoS
-from networks.connections.mathematical_connections import FlatWirelessNetwork, StepWiseDegradation
+from networks.connections.mathematical_connections import FlatWirelessNetwork, MultiRangeNetwork
 
 yaml.Dumper.ignore_aliases = lambda *args : True
 
@@ -25,8 +25,8 @@ class TestFlatWirelessNetworks(unittest.TestCase):
 class TestStepWiseNetworks(unittest.TestCase):
 
     def setUp(self):
-        self.step_default = StepWiseDegradation(radius=500, bins={
-            '0.5km': dict(latency=dict(delay=1, deviation=1),bandwidth=50000, error_rate=0),
+        self.step_default = MultiRangeNetwork(radius=500, bins={
+            '0.5km': dict(latency=dict(delay=1, deviation=1), bandwidth=50000, error_rate=0),
             '1km': dict(latency=dict(delay=10, deviation=3), bandwidth=5000, error_rate=1) })
 
     def test_defaults(self):

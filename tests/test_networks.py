@@ -15,12 +15,12 @@ class TestBaseStationLinear(unittest.TestCase):
                              'error_rate': '1.0%'}
         self.midhaul_qos = {'latency': {'delay': '3.0ms', 'deviation': '1.0ms'}, 'bandwidth': '100.0mbps',
                              'error_rate': '1.0%'}
-        self.radio_access_qos = dict(
+        self.parameters = dict(
             best_qos={'latency': {'delay': '5.0ms', 'deviation': '2.0ms'}, 'bandwidth': '10.0mbps',
                       'error_rate': '1.0%'},
             worst_qos={'latency': {'delay': '100.0ms', 'deviation': '20.0ms'}, 'bandwidth': '5.0mbps',
                        'error_rate': '2.0%'}, radius="5km")
-        self.network = SliceConceptualGraph(self.name, self.midhaul_qos, self.backhaul_qos, self.radio_access_qos)
+        self.network = SliceConceptualGraph(self.name, self.midhaul_qos, self.backhaul_qos, self.parameters)
 
     def test_creation(self):
         self.assertEqual(self.network.get_name(), "network")
@@ -52,7 +52,7 @@ class TestBaseStationLinear(unittest.TestCase):
             SliceConceptualGraph('test', {}, {}, {})
             SliceConceptualGraph('test', self.midhaul_qos, {}, {})
             SliceConceptualGraph('test', {}, self.backhaul_qos, {})
-            SliceConceptualGraph('test', {}, {}, self.radio_access_qos)
+            SliceConceptualGraph('test', {}, {}, self.parameters)
 
     def test_get_qos(self):
         self.assertEqual(self.network.get_backhaul(), QoS(self.backhaul_qos))
@@ -62,8 +62,8 @@ class TestBaseStationLinear(unittest.TestCase):
         self.assertEqual(self.network.get_backhaul(), QoS(QoS.minimum_qos_dict))
 
     def test_qos_from_distance(self):
-        self.assertEqual(self.network.get_qos_from(5).get_formated_qos(), self.radio_access_qos.get('worst_qos'))
-        self.assertEqual(self.network.get_qos_from(0.0).get_formated_qos(), self.radio_access_qos.get('best_qos'))
+        self.assertEqual(self.network.get_qos_from(5).get_formated_qos(), self.parameters.get('worst_qos'))
+        self.assertEqual(self.network.get_qos_from(0.0).get_formated_qos(), self.parameters.get('best_qos'))
 
     def test_get_node_location(self):
         lat, lon = 33, 40
@@ -109,12 +109,12 @@ class TestBaseLog2Degradation(unittest.TestCase):
                              'error_rate': '1.0%'}
         self.backhaul_qos = {'latency': {'delay': '3.0ms', 'deviation': '1.0ms'}, 'bandwidth': '100.0mbps',
                              'error_rate': '1.0%'}
-        self.radio_access_qos = dict(
+        self.parameters = dict(
             best_qos={'latency': {'delay': '5.0ms', 'deviation': '2.0ms'}, 'bandwidth': '10.0mbps',
                       'error_rate': '1.0%'},
             worst_qos={'latency': {'delay': '100.0ms', 'deviation': '20.0ms'}, 'bandwidth': '5.0mbps',
                        'error_rate': '2.0%'}, radius="5km")
-        self.network = SliceConceptualGraph(self.name, self.midhaul_qos, self.backhaul_qos, self.radio_access_qos)
+        self.network = SliceConceptualGraph(self.name, self.midhaul_qos, self.backhaul_qos, self.parameters)
 
     def test_creation(self):
         self.assertEqual(self.network.get_name(), "network")
@@ -147,7 +147,7 @@ class TestBaseLog2Degradation(unittest.TestCase):
             SliceConceptualGraph('test', {} ,{}, {})
             SliceConceptualGraph('test', self.midhaul_qos, {}, {})
             SliceConceptualGraph('test', {}, self.backhaul_qos, {})
-            SliceConceptualGraph('test', {}, {}, self.radio_access_qos)
+            SliceConceptualGraph('test', {}, {}, self.parameters)
 
     def test_get_qos(self):
         self.assertEqual(self.network.get_backhaul(), QoS(self.backhaul_qos))
@@ -157,8 +157,8 @@ class TestBaseLog2Degradation(unittest.TestCase):
         self.assertEqual(self.network.get_backhaul(), QoS(QoS.minimum_qos_dict))
 
     def test_qos_from_distance(self):
-        self.assertEqual(self.network.get_qos_from(5).get_formated_qos(), self.radio_access_qos.get('worst_qos'))
-        self.assertEqual(self.network.get_qos_from(0.0).get_formated_qos(), self.radio_access_qos.get('best_qos'))
+        self.assertEqual(self.network.get_qos_from(5).get_formated_qos(), self.parameters.get('worst_qos'))
+        self.assertEqual(self.network.get_qos_from(0.0).get_formated_qos(), self.parameters.get('best_qos'))
 
     def test_get_node_location(self):
         lat, lon = 33, 40

@@ -9,7 +9,7 @@ services:
       - ./:/home/jovyan/work
     ports:
       - 8888:8888
-      - 5600:5600
+      - 5555:5555
     environment:
       - "JUPYTER_ENABLE_LAB=yes"
       - "GRANT_SUDO=yes"
