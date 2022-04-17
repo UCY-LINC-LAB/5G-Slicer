@@ -11,7 +11,7 @@ from utils.location import Location
 class MobilityMap(object):
 
     @classmethod
-    def generate_map(cls, network: SliceConceptualGraph, **kwargs) -> Map:
+    def generate_map(cls, network: SliceConceptualGraph, slicer, **kwargs) -> Map:
         radius = network.get_radius()
         RUs = network.get_RUs()
         nodes = network.get_nodes()
@@ -36,8 +36,31 @@ class MobilityMap(object):
                     Marker(icon=RU_icon, location=(loc.lat, loc.lon), title=label, draggable=False,
                            popup=label_popup))
             else:
+                marker = Marker(location=(loc.lat, loc.lon), title=label, draggable=True, popup=label_popup)
+                def on_move(new_marker):
+                    def func(*args, **kwargs):
+
+                        from datetime import datetime
+                        last_time = getattr(on_move, 'last_time')
+                        now = datetime.now()
+
+                        if last_time is not None and abs((last_time-now).total_seconds())<5:
+                            return
+                        on_move.last_time = now
+
+                        location = kwargs.get('location', [])
+                        if len(location) == 0:
+                            return
+                        print(f"move_action {network.get_name()} {new_marker.title} {location}")
+                        slicer.move_node_to_location(network.get_name(), new_marker.title, lat=location[0], lon=location[1])
+                    return func
+
+                on_move.last_time = None
+
+
+                marker.on_move(callback=on_move(marker))
                 current_map.add_layer(
-                    Marker(location=(loc.lat, loc.lon), title=label, draggable=True, popup=label_popup))
+                    marker)
 
         return current_map
 

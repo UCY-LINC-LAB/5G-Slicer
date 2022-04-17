@@ -38,7 +38,8 @@ class BusExperiment(Template):
     max_num_of_trace_steps: int = 60
     min_num_of_trace_steps: int = 0
     bus_ids: List[int] = None
-    bs_overlap: str = "random"  # or max_density, min_density, kmeans
+    ru_overlap: str = "random"  # or max_density, min_density, kmeans
+    seed: int = None
 
     def __post_init__(self):
         if self.num_of_edge > self.num_of_RUs:
@@ -50,6 +51,7 @@ class BusExperiment(Template):
         self.__compute_nodes = []
         if self.bus_ids is None:
             self.bus_ids = []
+        random.seed(self.seed)
 
     def fill_stops_dataframe(self):
         self.stop_df = pd.read_csv(self.bus_stops_filename)
@@ -59,9 +61,9 @@ class BusExperiment(Template):
     def RUs(self):
         records = self.stop_df.to_dict('records')
         if self.__RUs == []:
-            if self.bs_overlap in ['min_density', 'max_density']:
+            if self.ru_overlap in ['min_density', 'max_density']:
                 self.__density_based_RUs(records)
-            elif self.bs_overlap == 'kmeans':
+            elif self.ru_overlap == 'kmeans':
                 self.___cluster_based_RUs(records)
             else:
                 self.__random_based_RUs(records)
@@ -94,7 +96,7 @@ class BusExperiment(Template):
                                                                         RU_1['Lon']).distance(
                     Location(RU_2['Lat'], RU_2['Lon']))
         records.sort(key=lambda x: RU_dists[x['stop_id']])
-        if self.bs_overlap == 'min_density':
+        if self.ru_overlap == 'min_density':
             self.__RUs = records[:self.num_of_RUs]
         else:
             self.__RUs = records[-self.num_of_RUs:]

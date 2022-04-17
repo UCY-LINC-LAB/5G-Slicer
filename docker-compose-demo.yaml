@@ -1,0 +1,64 @@
+services:
+  cloud_service:
+    image: bus-exp:0.0.1
+    environment:
+      - "5GSLICER_URL=192.168.7.5"
+  edge_service:
+    image: bus-exp:0.0.1
+    environment:
+      - "5GSLICER_URL=192.168.7.5"
+  bus_service:
+    image: bus-exp:0.0.1
+    environment:
+      - "5GSLICER_URL=192.168.7.5"
+      - "NODE_TYPE=IOT_NODE"
+    volumes:
+      - "/home/ubuntu/data:/data"
+version: '3.7'
+
+x-fogify:
+  networks:
+  - network_type: slice
+    midhaul_qos:
+      latency:
+        delay: 10ms
+        deviation: 1ms
+      bandwidth: 1000mbps
+    backhaul_qos:
+      latency:
+        delay: 30ms
+        deviation: 1ms
+      bandwidth: 100mbps
+    wireless_connection_type: MIMO
+    parameters:
+      transmit_power: 30  # dbm
+      carrier_frequency: 28  # gigahrz
+      bandwidth: 100  # megahrz
+      UE_noise_figure: 7.8  # db
+      RU_antennas_gain: 8 # db
+      UE_antennas_gain: 3 # db
+      maximum_bitrate: 538.71
+      minmum_bitrate: 53.87
+      queuing_delay: 2 # ms
+      RU_antennas: 8
+      UE_antennas: 4
+    name: dublin_network
+  nodes:
+  - capabilities:
+      memory: 2G
+      processor:
+        clock_speed: 2400
+        cores: 4
+    name: cloud_machine
+  - capabilities:
+      memory: 2G
+      processor:
+        clock_speed: 1400
+        cores: 2
+    name: edge_device
+  - capabilities:
+      memory: 0.25G
+      processor:
+        clock_speed: 500
+        cores: 1
+    name: bus_device

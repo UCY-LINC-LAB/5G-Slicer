@@ -15,21 +15,21 @@ class NetworkAPI(MethodView):
 
     def get(self, network):
         if network is None:
-            return jsonify({"networks": [key for key in self.slicerSDK.mobile_networks.keys()]})
+            return jsonify({"networks": [key for key in self.slicerSDK.slices.keys()]})
         else:
-            if network not in self.slicerSDK.mobile_networks:
+            if network not in self.slicerSDK.slices:
                 return jsonify({"error": "There is no network with that name"})
             else:
-                res = json_graph.node_link_data(self.slicerSDK.mobile_networks[network].graph)
+                res = json_graph.node_link_data(self.slicerSDK.slices[network].graph)
                 return jsonify({"nodes": res.get("nodes", [])})
 
 
 class NodeAPI(MethodView):
 
     def get(self, network, node_id):
-        if network not in self.slicerSDK.mobile_networks:
+        if network not in self.slicerSDK.slices:
             return {'error': 'network does not exist'}
-        return jsonify(self.slicerSDK.mobile_networks[network].get_node_location(node_id))
+        return jsonify(self.slicerSDK.slices[network].get_node_location(node_id))
 
     def post(self, network, node_id):
         lat = request.get_json().get('lat')
@@ -65,7 +65,11 @@ class APIService:
         app.json_encoder = CurrentEncoder
         app.add_url_rule('/network/<network>', view_func=network_view, methods=['GET'])
         app.add_url_rule('/network/<network>/<node_id>', view_func=node_view, methods=['GET', 'POST'])
-        self.main_thread = Process(target=app.run, kwargs={'port': 5600, 'host': '0.0.0.0'})
+
+        def run_server(flask_app=None):
+            flask_app.run(port=5555, host='0.0.0.0', debug=True, use_reloader=False)
+
+        self.main_thread = Process(target=run_server, kwargs={'flask_app': app})
         self.main_thread.start()
 
     def stop(self):

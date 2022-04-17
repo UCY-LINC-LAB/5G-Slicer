@@ -24,14 +24,14 @@ class SliceConceptualGraph:
 
     class NetworkSliceException(Exception): pass
 
-    def __init__(self, name, backhaul_qos, midhaul_qos, radio_access_qos, RUs=[],
+    def __init__(self, name, backhaul_qos, midhaul_qos, parameters, RUs=[],
                  wireless_connection_type="LinearDegradation", **kwargs):
         self.graph = nx.Graph()
         self.graph.name = name
         self.set_backhaul(backhaul_qos)
         self.set_midhaul(midhaul_qos)
         WirelessClass = getattr(prototype_networks, wireless_connection_type, LinearDegradation)
-        self.wireless_connection = WirelessClass(**radio_access_qos)
+        self.wireless_connection = WirelessClass(**parameters)
         self.set_cloud_connection()
         self.set_RUs(RUs)
 
@@ -89,6 +89,14 @@ class SliceConceptualGraph:
         """
         return {name: data['location'] for name, data in self.graph.nodes(data=True) if
                 data.get('type') in ['UE', 'EDGE', 'CLOUD']}
+
+    def get_edge_nodes(self) -> Dict[str, Location]:
+        """
+        Retrieves all nodes with compute capabilities from a network (UEs, EDGE, CLOUD)
+        :return: All compute nodes (UEs, EDGE, CLOUD)
+        """
+        return {name: data['location'] for name, data in self.graph.nodes(data=True) if
+                data.get('type') in ['EDGE']}
 
     def add_node(self, name: str, lat: float = None, lon: float = None, alt: float = None,
                  location_type: str = None) -> None:
@@ -237,9 +245,11 @@ class SliceConceptualGraph:
         """
         res = []
         RUs = self.get_RUs()
+        EDGEs = self.get_edge_nodes()
+
         for RU, bs_location in self.get_RUs().items():
             if bs_location is None: continue
-            res.append([RU, bs_location, len([i for i in self.graph.neighbors(RU) if i not in RUs])])
+            res.append([RU, bs_location, len([i for i in self.graph.neighbors(RU) if i not in RUs and i not in EDGEs])])
         return sorted(res, key=lambda x: x[1].distance(location), reverse=False)
 
     def set_node_location(self, node_name, lat, lon, alt=0.0) -> None:
@@ -269,16 +279,38 @@ class SliceConceptualGraph:
         :return: The respective QoS
         """
         if from_node == to_node: return
+        from_node_type = self.graph.nodes(data=True)[from_node].get('type')
+        to_node_type = self.graph.nodes(data=True)[to_node].get('type')
+
+        if from_node_type == 'CLOUD' and to_node_type == 'CLOUD':
+            return QoS()
         p = nx.shortest_path(self.graph, source=from_node, target=to_node)
         path_graph = list(nx.path_graph(p).edges())
         qos = QoS()
         ea = path_graph[0]
         edge = self.graph.edges[ea[0], ea[1]]
         qos = qos + edge['qos'] + edge['qos']
+        is_core_network_nodes = from_node_type in ['EDGE', 'CLOUD'] and to_node_type in ['EDGE', 'CLOUD']
+        rest_qos = QoS()
         for ea in path_graph[1:-1]:
             edge = self.graph.edges[ea[0], ea[1]]
-            qos = qos + edge['qos']
-        ea = path_graph[-1]
-        edge = self.graph.edges[ea[0], ea[1]]
-        qos = qos + edge['qos'] + edge['qos']
+            rest_qos = rest_qos + edge['qos'] + edge['qos']
+        if from_node_type == 'UE' and to_node_type != 'UE':
+            qos = qos + rest_qos + rest_qos
+        if from_node_type == 'UE' and to_node_type == 'UE':
+            if len(path_graph)>2:
+
+                qos = qos + rest_qos
+
+        if is_core_network_nodes:
+            qos = qos + rest_qos
+
+        if from_node_type in ['EDGE', 'CLOUD'] and to_node_type == 'UE':
+            temp_qos = QoS()
+            ea = path_graph[-1]
+            edge = self.graph.edges[ea[0], ea[1]]
+            temp_qos.set_bandwidth(edge['qos'].get_bandwidth())
+            qos = qos + temp_qos
+        if from_node_type == 'CLOUD' and to_node_type != 'CLOUD':
+            qos = qos + self.get_backhaul() + self.get_backhaul()
         return qos

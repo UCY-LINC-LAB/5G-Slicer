@@ -13,11 +13,11 @@ class FunctionalDegradation(Wireless):
 
     degradation_function = None
 
-    def __init__(self, **radio_access_qos):
-        self.__validate_radio_access_qos(radio_access_qos)
-        self.set_radio_access_best_qos(radio_access_qos.get('best_qos'))
-        self.set_radio_access_worst_qos(radio_access_qos.get('worst_qos'))
-        self.set_radius(radio_access_qos.get('radius'))
+    def __init__(self, **parameters):
+        self.__validate_parameters(parameters)
+        self.set_radio_access_best_qos(parameters.get('best_qos'))
+        self.set_radio_access_worst_qos(parameters.get('worst_qos'))
+        self.set_radius(parameters.get('radius'))
 
     def set_radio_access_best_qos(self, best_qos):
         self.radio_access_best_qos = QoS(best_qos)
@@ -64,14 +64,14 @@ class FunctionalDegradation(Wireless):
         return qos
 
     @staticmethod
-    def __validate_radio_access_qos(radio_access_qos):
+    def __validate_parameters(parameters):
         _ = FunctionalDegradation
-        if not radio_access_qos.get('best_qos'):
-            raise _.FunctionDegradationNetworkException(f"There is no best_qos function in params {radio_access_qos}")
-        if not radio_access_qos.get('worst_qos'):
-            raise _.FunctionDegradationNetworkException(f"There is no worst_qos function in params {radio_access_qos}")
-        if not radio_access_qos.get('radius'):
-            raise _.FunctionDegradationNetworkException(f"There is no radius function in params {radio_access_qos}")
+        if not parameters.get('best_qos'):
+            raise _.FunctionDegradationNetworkException(f"There is no best_qos function in params {parameters}")
+        if not parameters.get('worst_qos'):
+            raise _.FunctionDegradationNetworkException(f"There is no worst_qos function in params {parameters}")
+        if not parameters.get('radius'):
+            raise _.FunctionDegradationNetworkException(f"There is no radius function in params {parameters}")
 
     def set_radius(self, radius):
         self.radius = radius
@@ -103,16 +103,16 @@ class Log10Degradation(FunctionalDegradation):
     degradation_function = Log10DegradationFunction
 
 
-class StepWiseDegradation(Wireless):
+class MultiRangeNetwork(Wireless):
     """
     Stepwise QoS for a network. Specifically, the user can define multiple ranges (bins) with multiple QoS parameters
     """
 
-    class StepWiseDegradationNetworkException(Exception): pass
+    class MultiRangeNetworkNetworkException(Exception): pass
 
     def __init__(self, radius: int = 500, bins: dict = {}):
         if len(bins.keys()) < 1:
-            raise StepWiseDegradation.StepWiseDegradationNetworkException("The network needs at least one bin")
+            raise MultiRangeNetwork.MultiRangeNetworkNetworkException("The network needs at least one bin")
         keys = [self.get_radius_in_km(key) * 1000 for key in bins.keys()]
         keys.sort()
         new_keys = []
@@ -134,7 +134,7 @@ class StepWiseDegradation(Wireless):
         return self.radius
 
 
-class FlatWirelessNetwork(StepWiseDegradation):
+class FlatWirelessNetwork(MultiRangeNetwork):
     """
     This class keeps flat QoS in a specific radio unit based on specific radius (km)
     """
@@ -142,4 +142,4 @@ class FlatWirelessNetwork(StepWiseDegradation):
     def __init__(self, radius: int = 500,
                  qos={'latency': {'delay': 0, 'deviation': 0}, 'bandwidth': 1000000, 'error_rate': 0}):
         bin_ = self.get_radius_in_km(radius) if type(radius) == str else radius / 1000
-        StepWiseDegradation.__init__(self, radius, bins={f"{bin_}km": qos})
+        MultiRangeNetwork.__init__(self, radius, bins={f"{bin_}km": qos})

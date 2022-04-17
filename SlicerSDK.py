@@ -1,11 +1,14 @@
 from typing import Dict
-
+import matplotlib.pyplot as plt
+import matplotlib
+import numpy as np
 import yaml
 from ipyleaflet import Map
-
+import pickle
 from utils import to_camel_case
 from utils.server import APIService
 from utils.ui import MobilityMap
+import copy
 
 yaml.Dumper.ignore_aliases = lambda *args: True
 from FogifySDK.FogifySDK import ExceptionFogifySDK
@@ -138,13 +141,26 @@ class SlicerSDK(FogifySDK):
         """
         if slice not in self.slices: raise ExceptionFogifySDK(f"The {slice} is not mobile network.")
         network_obj = self.slices[slice]
+        old_value_delay = {}
+        for label_node in network_obj.get_nodes():
+            if label == label_node: continue
+            old_value_delay[f"{label_node}-{label}"] = network_obj.get_qos_between_nodes(label_node, label).get_delay()
+
         network_obj.set_node_location(label, lat, lon, alt)
         links = []
-        for label in network_obj.get_nodes():
-            qos = network_obj.get_qos_between_nodes(label, label)
-            if not qos: continue
-            links.append(dict(from_node=label, to_node=label,
-                              parameters={'properties': qos.get_formatted_bidirectional_qos()}, bidirectional=False))
+        for label_node in network_obj.get_nodes():
+            if label == label_node: continue
+            qos = network_obj.get_qos_between_nodes(label, label_node)
+            if qos:
+                links.append(dict(from_node=label, to_node=label_node,
+                              parameters={'properties': qos.get_formatted_bidirectional_qos()},
+                              bidirectional=False))
+            if old_value_delay[f"{label_node}-{label}"] != network_obj.get_qos_between_nodes(label_node, label).get_delay():
+                qos = network_obj.get_qos_between_nodes(label_node, label)
+                if qos:
+                    links.append(dict(from_node=label_node, to_node=label,
+                                  parameters={'properties': qos.get_formatted_bidirectional_qos()},
+                                  bidirectional=False))
         self.update_map(slice)
         return self.update_links(slice, links)
 
@@ -202,7 +218,7 @@ class SlicerSDK(FogifySDK):
         """
         self.check_slice(slice_name)
         network = self.slices.get(slice_name)
-        self.location_maps[slice_name] = MobilityMap.generate_map(network)
+        self.location_maps[slice_name] = MobilityMap.generate_map(network, self)
         return self.location_maps[slice_name]
 
     def update_map(self, slice_name: str)->None:
@@ -246,3 +262,59 @@ class SlicerSDK(FogifySDK):
         """
         FogifySDK.undeploy(self, timeout)
         self._server.stop()
+    
+    def profile(self, label, network_slice, energy_model = None, max_energy_consumption=None, last=None):
+        in_prefix = 'network_rx_'
+        out_prefix = 'network_tx_'
+        df = self.get_metrics_from(label).sort_values(by="count")
+        network_in_max =  df[f"{in_prefix}{network_slice}"].diff().max()
+        network_out_max =  df[f"{out_prefix}{network_slice}"].diff().max()
+        if last:
+            df = df[-last:]
+        has_energy_model = energy_model is not None and max_energy_consumption is not None 
+
+        attribute_labels=['cpu', 'memory', 'network-in', 'network-out']
+        if has_energy_model:
+            attribute_labels.append('emergy')
+
+        plot_markers = [0, 20, 40, 60, 80, 100]
+
+        cpu = df.cpu_util.mean()/100
+        memory = df.memory_util.mean()/100
+        network_in = df[f"{in_prefix}{network_slice}"].diff().mean()
+
+        network_out = df[f"{out_prefix}{network_slice}"].diff().mean()
+
+
+        network_out_ptc = network_out/network_out_max if network_out_max>0 else 0.0
+        network_in_ptc = network_in/network_in_max if network_in_max>0 else 0.0
+        stats = [100*cpu, 100*memory, 100*network_out_ptc, 100*network_in_ptc]
+        if has_energy_model:
+            energy = 100*eval(energy_model)
+            stats = [100*cpu, 100*memory, 100*network_out_ptc, 100*network_in_ptc, energy/max_energy_consumption]
+        labels = np.array(attribute_labels)
+        matplotlib.rc('xtick', labelsize=16) 
+        matplotlib.rc('ytick', labelsize=16) 
+
+        angles = np.linspace(0, 2*np.pi, len(labels), endpoint=False)
+        stats = np.concatenate((stats,[stats[0]]))
+        angles = np.concatenate((angles,[angles[0]]))
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111, polar=True)
+        ax.plot(angles, stats, 'o-', linewidth=2)
+        ax.fill(angles, stats, alpha=0.25)
+        ax.set_thetagrids(angles[:-1] * 180/np.pi, labels)
+        plt.yticks(plot_markers)
+        ax.grid(True)
+        plt.show()
+    
+    def store(self, filename='slicerSDK'):
+        filename+=".pickle"
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f)
+
+    def load(self, filename='slicerSDK'):
+        filename += ".pickle"
+        with open(filename, 'rb') as f:
+            self = pickle.load(f)

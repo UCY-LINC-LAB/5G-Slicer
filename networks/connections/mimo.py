@@ -23,7 +23,7 @@ class SISO(Wireless):
                  carrier_frequency=28,  # gigahrz
                  bandwidth=100,  # megahrz
                  UE_noise_figure=7.8,  # db
-                 BS_antennas_gain=8,  # db
+                 RU_antennas_gain=8,  # db
                  UE_antennas_gain=3,  # db
                  maximum_bitrate=538.71,  # mbits per second
                  minmum_bitrate=53.87,  # mbits per second
@@ -36,7 +36,7 @@ class SISO(Wireless):
         self.UE_noise_figure = float(UE_noise_figure)
         self.queuing_delay = float(queuing_delay)  # The delay is static
         self.transmit_power = float(transmit_power)
-        self.BS_antennas_gain = float(BS_antennas_gain)
+        self.RU_antennas_gain = float(RU_antennas_gain)
         self.UE_antennas_gain = float(UE_antennas_gain)
 
     def get_radius(self) -> float:
@@ -73,7 +73,7 @@ class SISO(Wireless):
         negative_propagation_loss = self.propagation_loss_model.CalcRxPower(self.transmit_power, a, b)  # dbm
         negative_propagation_loss -= 30  # to db
         transmit_power_to_db = self.transmit_power - 30
-        RSSI = transmit_power_to_db + self.UE_antennas_gain + self.BS_antennas_gain + negative_propagation_loss
+        RSSI = transmit_power_to_db + self.UE_antennas_gain + self.RU_antennas_gain + negative_propagation_loss
         return RSSI
 
     def get_snr_from_distance(self, distance) -> float:
@@ -148,17 +148,17 @@ class MIMO(SISO):
                  carrier_frequency=28,  # gigahrz
                  bandwidth=100,  # megahrz
                  UE_noise_figure=0,  # db
-                 BS_antennas_gain=8,  # db
+                 RU_antennas_gain=8,  # db
                  UE_antennas_gain=3,  # db
-                 maximum_bitrate=538.71, minmum_bitrate=53.87, queuing_delay=2, BS_antennas=8, UE_antennas=4):
+                 maximum_bitrate=538.71, minmum_bitrate=53.87, queuing_delay=2, RU_antennas=8, UE_antennas=4):
         SISO.__init__(self, transmit_power,  # dbm
                       carrier_frequency,  # gigahrz
                       bandwidth,  # megahrz
                       UE_noise_figure,  # db
-                      BS_antennas_gain,  # db
+                      RU_antennas_gain,  # db
                       UE_antennas_gain,  # db
                       maximum_bitrate, minmum_bitrate, queuing_delay)
-        self.BS_antennas = int(BS_antennas)
+        self.RU_antennas = int(RU_antennas)
         self.UE_antennas = int(UE_antennas)
 
     def get_qos_from(self, distance, RUs, location: Location, *args, **kwargs) -> QoS:
@@ -168,7 +168,7 @@ class MIMO(SISO):
         def compute_bandwidth(obj, location, RU):  # computes the bandwidth for each RU
             qos = SISO.get_qos_from(obj, location.distance(RU[1]))
             connected_UEs = RU[2]
-            available_antennas = obj.BS_antennas - connected_UEs * obj.UE_antennas
+            available_antennas = obj.RU_antennas - connected_UEs * obj.UE_antennas
             return min([available_antennas, obj.UE_antennas]) * qos.get_bandwidth()
 
         for RU in RUs:
@@ -176,7 +176,7 @@ class MIMO(SISO):
         RUs_ = sorted(RUs, key=lambda RU: RU[2], reverse=True)  # sort RUs by bandwidth
         RU = RUs_[0]  # get the RU with the maximum available bandiwdth
         connected_UEs = RU[2]
-        available_antennas = self.BS_antennas - (connected_UEs - 1) * self.UE_antennas
+        available_antennas = self.RU_antennas - (connected_UEs - 2) * self.UE_antennas
         if available_antennas == 0:  # if there is no available antennas
             return QoS.get_minimum_qos()  # The UE is disconnected
         qos = SISO.get_qos_from(self, location.distance(RU[1]))  # get QoS for single-input-single-output channel

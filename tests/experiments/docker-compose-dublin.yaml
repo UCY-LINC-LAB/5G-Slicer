@@ -19,7 +19,7 @@ x-fogify:
         delay: 30ms
         deviation: 1ms
       bandwidth: 100mbps
-    radio_access_qos:
+    parameters:
       radius: 0.2km
       degradation_function: LinearDegradationFunction
       best_qos:
