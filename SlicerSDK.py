@@ -303,6 +303,7 @@ class SlicerSDK(FogifySDK):
         fig = plt.figure()
         ax = fig.add_subplot(111, polar=True)
         ax.plot(angles, stats, 'o-', linewidth=2)
+        ax.set_title(f'Profiling of {label} node')
         ax.fill(angles, stats, alpha=0.25)
         ax.set_thetagrids(angles[:-1] * 180/np.pi, labels)
         plt.yticks(plot_markers)

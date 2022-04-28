@@ -34,7 +34,7 @@ RUN pip install ns-3.33-py3-none-any.whl
 
 WORKDIR $HOME
 USER $NB_UID
-
+COPY . /home/jovyan/work
 ENV GRANT_SUDO=yes
 USER root
 EXPOSE 5600
